@@ -8,27 +8,52 @@
   <style>
     body { font-family: Arial, sans-serif; padding: 20px; }
     input[type="file"] { margin-bottom: 10px; }
+    #status { margin-top: 15px; font-weight: bold; }
   </style>
 </head>
 <body>
-  <h2>EmailJS Auto Sender (CSV + Rotation)</h2>
+  <h2>EmailJS Auto Sender (CSV Upload + Account Rotation)</h2>
   <input type="file" id="csvFile" accept=".csv" />
   <p id="status">Upload your CSV to begin...</p>
 
   <script>
-    emailjs.init('YOUR_PUBLIC_KEY'); // Replace with your EmailJS public key
-
     const emailAccounts = [
-      { serviceID: 'service_1' },
-      { serviceID: 'service_2' },
-      { serviceID: 'service_3' },
-      { serviceID: 'service_4' },
-      { serviceID: 'service_5' },
-      { serviceID: 'service_6' },
-      { serviceID: 'service_7' }
+      {
+        serviceID: 'service_dpddfu8',       // Replace with actual EmailJS service ID
+        templateID: 'template_mtxhelt',     // Replace with actual template ID
+        publicKey: 'Hjhu0lQHnIhWwnc5f'        // Replace with actual public key
+      },
+      {
+        serviceID: 'service_18a2czr',
+        templateID: 'template_l4ni91d',
+        publicKey: 'MaT8uSC8px4Mo8iik'
+      },
+      {
+        serviceID: 'service_rd3mgro',
+        templateID: 'template_95tpex7',
+        publicKey: 'kH6MFB65FZRI8OQsN'
+      },
+      {
+        serviceID: 'service_urbrati',
+        templateID: 'template_32ta9rb',
+        publicKey: '29JWVNzQ5OHNYKilW'
+      },
+      {
+        serviceID: 'service_312uxnp',
+        templateID: 'template_fewzmko',
+        publicKey: 'CHvErJNKqgQGXF1OK'
+      },
+      {
+        serviceID: 'service_0phbhha',
+        templateID: 'template_tfh8zg2',
+        publicKey: 'oPJ7Dc3pZzCRXsxpZ'
+      },
+      {
+        serviceID: 'service_mrxk2c8',
+        templateID: 'template_vtpm26s',
+        publicKey: 'TohM3Q_EABo2n1kwX'
+      }
     ];
-
-    const templateID = 'YOUR_TEMPLATE_ID'; // Replace with your template ID
 
     let dataRows = [];
     let rowIndex = 0;
@@ -40,7 +65,8 @@
       const currentAccount = emailAccounts[accountIndex];
       const currentData = dataRows[rowIndex];
 
-      console.log(`Sending to ${currentData.Email} using ${currentAccount.serviceID}`);
+      // Re-init EmailJS with current public key
+      emailjs.init(currentAccount.publicKey);
 
       const templateParams = {
         Name: currentData.Name,
@@ -49,20 +75,26 @@
         email: currentData.Email
       };
 
-      emailjs.send(currentAccount.serviceID, templateID, templateParams)
+      console.log(`Sending to ${templateParams.email} via ${currentAccount.serviceID}`);
+
+      emailjs.send(currentAccount.serviceID, currentAccount.templateID, templateParams)
         .then(res => {
           console.log('Email sent:', res.status);
-          document.getElementById('status').innerText = `Last sent: ${currentData.Email}`;
+          document.getElementById('status').innerText =
+            `✅ Sent to: ${templateParams.email} using ${currentAccount.serviceID} | Next in 10 minutes`;
         })
         .catch(err => {
           console.error('Send failed:', err);
-          document.getElementById('status').innerText = `Error sending to: ${currentData.Email}`;
+          document.getElementById('status').innerText =
+            `❌ Error sending to: ${templateParams.email}`;
         });
 
+      // Rotate to next row and account
       rowIndex = (rowIndex + 1) % dataRows.length;
       accountIndex = (accountIndex + 1) % emailAccounts.length;
     }
 
+    // CSV upload and parse
     document.getElementById('csvFile').addEventListener('change', function (event) {
       const file = event.target.files[0];
       if (!file) return;
@@ -72,12 +104,13 @@
         skipEmptyLines: true,
         complete: function (results) {
           dataRows = results.data;
-          document.getElementById('status').innerText = `Loaded ${dataRows.length} entries. Starting in 5 seconds...`;
-          console.log(dataRows);
+          document.getElementById('status').innerText =
+            `✅ Loaded ${dataRows.length} records. Starting in 5 seconds...`;
+          console.log('Parsed CSV:', dataRows);
 
           setTimeout(() => {
-            sendNextEmail(); // Send first one immediately
-            setInterval(sendNextEmail, 10 * 60 * 1000); // Every 10 minutes
+            sendNextEmail(); // Send first immediately
+            setInterval(sendNextEmail, 10 * 60 * 1000); // Send every 10 minutes
           }, 5000);
         }
       });
