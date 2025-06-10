@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>EmailJS CSV Rotator</title>
+  <script src="https://cdn.jsdelivr.net/npm/emailjs-com@3/dist/email.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
+  <style>
+    body { font-family: Arial, sans-serif; padding: 20px; }
+    input[type="file"] { margin-bottom: 10px; }
+  </style>
+</head>
+<body>
+  <h2>EmailJS Auto Sender (CSV + Rotation)</h2>
+  <input type="file" id="csvFile" accept=".csv" />
+  <p id="status">Upload your CSV to begin...</p>
+
+  <script>
+    emailjs.init('YOUR_PUBLIC_KEY'); // Replace with your EmailJS public key
+
+    const emailAccounts = [
+      { serviceID: 'service_1' },
+      { serviceID: 'service_2' },
+      { serviceID: 'service_3' },
+      { serviceID: 'service_4' },
+      { serviceID: 'service_5' },
+      { serviceID: 'service_6' },
+      { serviceID: 'service_7' }
+    ];
+
+    const templateID = 'YOUR_TEMPLATE_ID'; // Replace with your template ID
+
+    let dataRows = [];
+    let rowIndex = 0;
+    let accountIndex = 0;
+
+    function sendNextEmail() {
+      if (dataRows.length === 0) return;
+
+      const currentAccount = emailAccounts[accountIndex];
+      const currentData = dataRows[rowIndex];
+
+      console.log(`Sending to ${currentData.Email} using ${currentAccount.serviceID}`);
+
+      const templateParams = {
+        Name: currentData.Name,
+        vin: currentData.VIN,
+        Address: currentData.Address,
+        email: currentData.Email
+      };
+
+      emailjs.send(currentAccount.serviceID, templateID, templateParams)
+        .then(res => {
+          console.log('Email sent:', res.status);
+          document.getElementById('status').innerText = `Last sent: ${currentData.Email}`;
+        })
+        .catch(err => {
+          console.error('Send failed:', err);
+          document.getElementById('status').innerText = `Error sending to: ${currentData.Email}`;
+        });
+
+      rowIndex = (rowIndex + 1) % dataRows.length;
+      accountIndex = (accountIndex + 1) % emailAccounts.length;
+    }
+
+    document.getElementById('csvFile').addEventListener('change', function (event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      Papa.parse(file, {
+        header: true,
+        skipEmptyLines: true,
+        complete: function (results) {
+          dataRows = results.data;
+          document.getElementById('status').innerText = `Loaded ${dataRows.length} entries. Starting in 5 seconds...`;
+          console.log(dataRows);
+
+          setTimeout(() => {
+            sendNextEmail(); // Send first one immediately
+            setInterval(sendNextEmail, 10 * 60 * 1000); // Every 10 minutes
+          }, 5000);
+        }
+      });
+    });
+  </script>
+</body>
+</html>
