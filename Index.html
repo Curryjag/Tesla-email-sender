@@ -140,14 +140,14 @@
 
       // Calculate time since last send
       const lastSendTime = localStorage.getItem('lastSendTime');
-      const timeSinceLastSend = lastSendTime ? Date.now() - parseInt(lastSendTime) : 5 * 60 * 1000;
-      const timeToNextSend = Math.max(0, (5 * 60 * 1000) - timeSinceLastSend);
+      const timeSinceLastSend = lastSendTime ? Date.now() - parseInt(lastSendTime) : 3 * 60 * 1000;
+      const timeToNextSend = Math.max(0, (3 * 60 * 1000) - timeSinceLastSend);
       
       // Clear any existing interval
       if (emailInterval) clearInterval(emailInterval);
       
       // Initial send (either immediately or after delay)
-      if (timeSinceLastSend >= 5 * 60 * 1000) {
+      if (timeSinceLastSend >= 3 * 60 * 1000) {
         sendNextEmail();
       } else {
         updateStatus(`⏳ Next email in ${Math.ceil(timeToNextSend/60000)} minutes...`);
@@ -155,7 +155,7 @@
       }
       
       // Start regular interval
-      emailInterval = setInterval(sendNextEmail, 5 * 60 * 1000);
+      emailInterval = setInterval(sendNextEmail, 3 * 60 * 1000);
     }
 
     // ====== CSV UPLOAD ======
